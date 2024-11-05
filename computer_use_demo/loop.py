@@ -102,6 +102,7 @@ async def sampling_loop(
         enable_prompt_caching = False
         betas = [COMPUTER_USE_BETA_FLAG]
         image_truncation_threshold = 10
+        client: Anthropic
         if provider == APIProvider.ANTHROPIC:
             client = Anthropic(api_key=api_key)
             enable_prompt_caching = True
@@ -144,7 +145,9 @@ async def sampling_loop(
             api_response_callback(e.request, e.body, e)
             return messages
 
-        api_response_callback(raw_response.http_response.request, raw_response.http_response, None)
+        api_response_callback(
+            raw_response.http_response.request, raw_response.http_response, None
+        )
 
         response = raw_response.parse()
 
@@ -164,7 +167,9 @@ async def sampling_loop(
                     name=content_block["name"],
                     tool_input=cast(dict[str, Any], content_block["input"]),
                 )
-                tool_result_content.append(_make_api_tool_result(result, content_block["id"]))
+                tool_result_content.append(
+                    _make_api_tool_result(result, content_block["id"])
+                )
                 tool_output_callback(result, content_block["id"])
 
         if not tool_result_content:
@@ -192,7 +197,9 @@ def _maybe_filter_to_n_most_recent_images(
         [
             item
             for message in messages
-            for item in (message["content"] if isinstance(message["content"], list) else [])
+            for item in (
+                message["content"] if isinstance(message["content"], list) else []
+            )
             if isinstance(item, dict) and item.get("type") == "tool_result"
         ],
     )
@@ -210,13 +217,15 @@ def _maybe_filter_to_n_most_recent_images(
 
     for tool_result in tool_result_blocks:
         if isinstance(tool_result.get("content"), list):
-            new_content = []
+            new_content: list[BetaTextBlockParam | BetaImageBlockParam] = []
             for content in tool_result.get("content", []):
                 if isinstance(content, dict) and content.get("type") == "image":
                     if images_to_remove > 0:
                         images_to_remove -= 1
                         continue
-                new_content.append(content)
+                new_content.append(
+                    cast(BetaTextBlockParam | BetaImageBlockParam, content)
+                )
             tool_result["content"] = new_content
 
 
@@ -242,42 +251,53 @@ def _inject_prompt_caching(
 
     breakpoints_remaining = 3
     for message in reversed(messages):
-        if message["role"] == "user" and isinstance(content := message["content"], list):
+        if message["role"] == "user" and isinstance(
+            content := message["content"], list
+        ):
             if breakpoints_remaining:
                 breakpoints_remaining -= 1
-                content[-1]["cache_control"] = BetaCacheControlEphemeralParam({"type": "ephemeral"})
+                content[-1]["cache_control"] = BetaCacheControlEphemeralParam(
+                    {"type": "ephemeral"}
+                )
             else:
                 content[-1].pop("cache_control", None)
                 # we'll only every have one extra turn per loop
                 break
 
 
-def _make_api_tool_result(result: ToolResult, tool_use_id: str) -> BetaToolResultBlockParam:
+def _make_api_tool_result(
+    result: ToolResult, tool_use_id: str
+) -> BetaToolResultBlockParam:
     """Convert an agent ToolResult to an API ToolResultBlockParam."""
-    tool_result_content: list[BetaTextBlockParam | BetaImageBlockParam] | str = []
     is_error = False
     if result.error:
         is_error = True
-        tool_result_content = _maybe_prepend_system_tool_result(result, result.error)
-    else:
-        if result.output:
-            tool_result_content.append(
-                {
-                    "type": "text",
-                    "text": _maybe_prepend_system_tool_result(result, result.output),
-                }
-            )
-        if result.base64_image:
-            tool_result_content.append(
-                {
-                    "type": "image",
-                    "source": {
-                        "type": "base64",
-                        "media_type": "image/png",
-                        "data": result.base64_image,
-                    },
-                }
-            )
+        return {
+            "type": "tool_result",
+            "content": _maybe_prepend_system_tool_result(result, result.error),
+            "tool_use_id": tool_use_id,
+            "is_error": is_error,
+        }
+
+    tool_result_content: list[BetaTextBlockParam | BetaImageBlockParam] = []
+    if result.output:
+        tool_result_content.append(
+            {
+                "type": "text",
+                "text": _maybe_prepend_system_tool_result(result, result.output),
+            }
+        )
+    if result.base64_image:
+        tool_result_content.append(
+            {
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": "image/png",
+                    "data": result.base64_image,
+                },
+            }
+        )
     return {
         "type": "tool_result",
         "content": tool_result_content,
@@ -286,7 +306,7 @@ def _make_api_tool_result(result: ToolResult, tool_use_id: str) -> BetaToolResul
     }
 
 
-def _maybe_prepend_system_tool_result(result: ToolResult, result_text: str):
+def _maybe_prepend_system_tool_result(result: ToolResult, result_text: str) -> str:
     if result.system:
         result_text = f"<system>{result.system}</system>\n{result_text}"
     return result_text
