@@ -17,14 +17,9 @@ import httpx
 import streamlit as st
 from anthropic import RateLimitError
 from anthropic.types.beta import BetaContentBlockParam, BetaTextBlockParam
+from computer_use.loop import PROVIDER_TO_DEFAULT_MODEL_NAME, APIProvider, sampling_loop
+from computer_use.tools import ToolResult
 from streamlit.delta_generator import DeltaGenerator
-
-from computer_use_demo.loop import (
-    PROVIDER_TO_DEFAULT_MODEL_NAME,
-    APIProvider,
-    sampling_loop,
-)
-from computer_use_demo.tools import ToolResult
 
 CONFIG_DIR = PosixPath("~/.anthropic").expanduser()
 API_KEY_FILE = CONFIG_DIR / "api_key"
@@ -56,9 +51,7 @@ def setup_state():
         st.session_state.messages = []
     if "api_key" not in st.session_state:
         # Try to load API key from file first, then environment
-        st.session_state.api_key = load_from_storage("api_key") or os.getenv(
-            "ANTHROPIC_API_KEY", ""
-        )
+        st.session_state.api_key = load_from_storage("api_key") or os.getenv("ANTHROPIC_API_KEY", "")
     if "provider" not in st.session_state:
         st.session_state.provider = os.getenv("API_PROVIDER", "anthropic") or APIProvider.ANTHROPIC
     if "provider_radio" not in st.session_state:
@@ -80,9 +73,7 @@ def setup_state():
 
 
 def _reset_model():
-    st.session_state.model = PROVIDER_TO_DEFAULT_MODEL_NAME[
-        cast(APIProvider, st.session_state.provider)
-    ]
+    st.session_state.model = PROVIDER_TO_DEFAULT_MODEL_NAME[cast(APIProvider, st.session_state.provider)]
 
 
 async def main():
@@ -132,10 +123,8 @@ async def main():
         st.text_area(
             "Custom System Prompt Suffix",
             key="custom_system_prompt",
-            help="Additional instructions to append to the system prompt. see computer_use_demo/loop.py for the base system prompt.",
-            on_change=lambda: save_to_storage(
-                "system_prompt", st.session_state.custom_system_prompt
-            ),
+            help="Additional instructions to append to the system prompt. see computer_use/loop.py for the base system prompt.",
+            on_change=lambda: save_to_storage("system_prompt", st.session_state.custom_system_prompt),
         )
         st.checkbox("Hide screenshots", key="hide_images")
 
@@ -206,9 +195,7 @@ async def main():
                 provider=st.session_state.provider,
                 messages=st.session_state.messages,
                 output_callback=partial(_render_message, Sender.BOT),
-                tool_output_callback=partial(
-                    _tool_output_callback, tool_state=st.session_state.tools
-                ),
+                tool_output_callback=partial(_tool_output_callback, tool_state=st.session_state.tools),
                 api_response_callback=partial(
                     _api_response_callback,
                     tab=http_logs,

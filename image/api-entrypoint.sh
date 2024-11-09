@@ -9,4 +9,4 @@ export DISPLAY=:${DISPLAY_NUM}
 ./x11vnc_startup.sh
 
 # Start the FastAPI server
-uvicorn computer_use_demo.api:app --host 0.0.0.0 --port 8000
+uvicorn computer_use.api:app --host 0.0.0.0 --port 8000

@@ -1,6 +1,5 @@
 import pytest
-
-from computer_use_demo.tools.bash import BashTool, ToolError
+from computer_use.tools.bash import BashTool, ToolError
 
 
 @pytest.fixture

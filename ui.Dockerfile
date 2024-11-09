@@ -88,12 +88,12 @@ RUN python -m pip install --upgrade pip==23.1.2 setuptools==58.0.4 wheel==0.40.0
     python -m pip config set global.disable-pip-version-check true
 
 # only reinstall if requirements.txt changes
-COPY --chown=$USERNAME:$USERNAME computer_use_demo/requirements.txt $HOME/computer_use_demo/requirements.txt
-RUN python -m pip install -r $HOME/computer_use_demo/requirements.txt
+COPY --chown=$USERNAME:$USERNAME computer_use/requirements.txt $HOME/computer_use/requirements.txt
+RUN python -m pip install -r $HOME/computer_use/requirements.txt
 
 # setup desktop env & app
 COPY --chown=$USERNAME:$USERNAME image/ $HOME
-COPY --chown=$USERNAME:$USERNAME computer_use_demo/ $HOME/computer_use_demo/
+COPY --chown=$USERNAME:$USERNAME computer_use/ $HOME/computer_use/
 
 ARG DISPLAY_NUM=1
 ARG HEIGHT=768
