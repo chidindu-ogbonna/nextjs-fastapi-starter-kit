@@ -16,6 +16,18 @@ To start the API for testing and development:
 docker compose up api -d # -d for detached mode
 ```
 
+To rebuild the UI image:
+
+```bash
+docker build -t computer-use-ui -f ui.Dockerfile .
+```
+
+To cd into the container:
+
+```bash
+docker exec -it computer-use-ui bash
+```
+
 ### Accessing the demo app
 
 Once the container is running, open your browser to [http://localhost:8080](http://localhost:8080) to access the combined interface that includes both the agent chat and desktop view.

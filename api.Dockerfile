@@ -30,12 +30,12 @@ USER computeruse
 WORKDIR $HOME
 
 # Install Python dependencies
-COPY --chown=$USERNAME:$USERNAME computer_use_demo/requirements.txt requirements.txt
+COPY --chown=$USERNAME:$USERNAME computer_use/requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
 RUN pip3 install uvicorn
 
 # Copy application files
-COPY --chown=$USERNAME:$USERNAME computer_use_demo/ computer_use_demo/
+COPY --chown=$USERNAME:$USERNAME computer_use/ computer_use/
 COPY --chown=$USERNAME:$USERNAME image/api-entrypoint.sh $HOME
 # TODO: Delete L:40 if L:39 is working properly
 # COPY --chown=$USERNAME:$USERNAME api-entrypoint.sh .

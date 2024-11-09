@@ -1,14 +1,4 @@
 services:
-  api:
-    container_name: computer-use-api
-    build:
-      context: .
-      dockerfile: api.Dockerfile
-    ports:
-      - "8000:8000"
-    env_file:
-      - .env
-
   ui:
     container_name: computer-use-ui
     build:
@@ -21,3 +11,21 @@ services:
       - "8080:8080"
     env_file:
       - .env
+    volumes:
+      - ./computer_use:/home/computeruse/computer_use
+      - ./image:/home/computeruse/image
+      - ./.env:/home/computeruse/.env
+
+  api:
+    container_name: computer-use-api
+    build:
+      context: .
+      dockerfile: api.Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./computer_use:/home/computeruse/computer_use
+      - ./image:/home/computeruse
+      - ./.env:/home/computeruse/.env

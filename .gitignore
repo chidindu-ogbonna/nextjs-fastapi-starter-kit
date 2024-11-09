@@ -4,3 +4,5 @@ __pycache__
 .pytest_cache
 .env
 snippets/
+image/.cache
+image/*_history
