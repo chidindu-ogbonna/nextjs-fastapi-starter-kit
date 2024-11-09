@@ -1,16 +1,17 @@
 {
     "pylint.args": [
-        "--disable=missing-module-docstring,missing-function-docstring,missing-class-docstring,C0301"
+        // W0236: overriding __call__ method with async
+        "--disable=missing-module-docstring,missing-function-docstring,missing-class-docstring,C0301,W0236"
     ],
     "flake8.args": [
         "--ignore=E203,E266,E501,W503"
     ],
-    "mypy-type-checker.args": [
-        "--ignore-missing-imports",
-        "--disable-error-code=assignment"
+    "ruff.format.args": [
+        "--config=ruff.toml"
     ],
-    "ruff.format.args": ["--config=ruff.toml"],
-    "ruff.lint.args": ["--config=ruff.toml"],
+    "ruff.lint.args": [
+        "--config=ruff.toml"
+    ],
     "[python]": {
         "editor.defaultFormatter": "charliermarsh.ruff",
         "editor.formatOnSave": true,

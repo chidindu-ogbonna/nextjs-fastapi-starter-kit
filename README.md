@@ -1,5 +1,27 @@
 # Computer Use
 
+## v2 - Latest (Docker Compose)
+
+### Setup
+
+To start the UI for local view and development:
+
+```bash
+docker compose up ui -d # -d for detached mode
+```
+
+To start the API for testing and development:
+
+```bash
+docker compose up api -d # -d for detached mode
+```
+
+### Accessing the demo app
+
+Once the container is running, open your browser to [http://localhost:8080](http://localhost:8080) to access the combined interface that includes both the agent chat and desktop view.
+
+## v1
+
 > [!CAUTION]
 > Computer use is a beta feature. Please be aware that computer use poses unique risks that are distinct from standard API features or chat interfaces. These risks are heightened when using computer use to interact with the internet. To minimize risks, consider taking precautions such as:
 >
@@ -23,7 +45,6 @@ Please use [this form](https://forms.gle/BT1hpBrqDPDUrCqo7) to provide feedback 
 
 > [!IMPORTANT]
 > The Beta API used in this reference implementation is subject to change. Please refer to the [API release notes](https://docs.anthropic.com/en/release-notes/api) for the most up-to-date information.
-
 > [!IMPORTANT]
 > The components are weakly separated: the agent loop runs in the container being controlled by Claude, can only be used by one session at a time, and must be restarted or reset between sessions if necessary.
 
@@ -109,3 +130,17 @@ docker run \
 ```
 
 The docker run command above mounts the repo inside the docker image, such that you can edit files from the host. Streamlit is already configured with auto reloading.
+
+## API Setup
+
+Build the docker image:
+
+```bash
+docker build -t computer-use-api .
+```
+
+Run the docker container:
+
+```bash
+docker run -p 8000:8000 --env-file .env computer-use-api
+```

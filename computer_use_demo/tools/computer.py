@@ -18,18 +18,18 @@ OUTPUT_DIR = "/tmp/outputs"
 TYPING_DELAY_MS = 12
 TYPING_GROUP_SIZE = 50
 
-Action = Literal[
-    "key",
-    "type",
-    "mouse_move",
+MOUSE_CLICK = (
     "left_click",
-    "left_click_drag",
     "right_click",
-    "middle_click",
     "double_click",
+    "middle_click",
     "screenshot",
     "cursor_position",
-]
+)
+
+KEYBOARD_ACTION = ("key", "type")
+
+MOUSE_MOVEMENT = ("mouse_move", "left_click_drag")
 
 
 class Resolution(TypedDict):
@@ -106,87 +106,19 @@ class ComputerTool(BaseAnthropicTool):
     async def __call__(
         self,
         *,
-        action: Action,
+        action: str,
         text: str | None = None,
         coordinate: tuple[int, int] | None = None,
         **kwargs,
     ):
-        if action in ("mouse_move", "left_click_drag"):
-            if coordinate is None:
-                raise ToolError(f"coordinate is required for {action}")
-            if text is not None:
-                raise ToolError(f"text is not accepted for {action}")
-            if not isinstance(coordinate, list) or len(coordinate) != 2:
-                raise ToolError(f"{coordinate} must be a tuple of length 2")
-            if not all(isinstance(i, int) and i >= 0 for i in coordinate):
-                raise ToolError(f"{coordinate} must be a tuple of non-negative ints")
+        if action in MOUSE_MOVEMENT:
+            return await self._handle_mouse_movement(action, coordinate, text)
 
-            x, y = self.scale_coordinates(ScalingSource.API, coordinate[0], coordinate[1])
+        if action in KEYBOARD_ACTION:
+            return await self._handle_keyboard(action, coordinate, text)
 
-            if action == "mouse_move":
-                return await self.shell(f"{self.xdotool} mousemove --sync {x} {y}")
-            elif action == "left_click_drag":
-                return await self.shell(
-                    f"{self.xdotool} mousedown 1 mousemove --sync {x} {y} mouseup 1"
-                )
-
-        if action in ("key", "type"):
-            if text is None:
-                raise ToolError(f"text is required for {action}")
-            if coordinate is not None:
-                raise ToolError(f"coordinate is not accepted for {action}")
-            if not isinstance(text, str):
-                raise ToolError(output=f"{text} must be a string")
-
-            if action == "key":
-                return await self.shell(f"{self.xdotool} key -- {text}")
-            elif action == "type":
-                results: list[ToolResult] = []
-                for chunk in chunks(text, TYPING_GROUP_SIZE):
-                    cmd = f"{self.xdotool} type --delay {TYPING_DELAY_MS} -- {shlex.quote(chunk)}"
-                    results.append(await self.shell(cmd, take_screenshot=False))
-                screenshot_base64 = (await self.screenshot()).base64_image
-                return ToolResult(
-                    output="".join(result.output or "" for result in results),
-                    error="".join(result.error or "" for result in results),
-                    base64_image=screenshot_base64,
-                )
-
-        if action in (
-            "left_click",
-            "right_click",
-            "double_click",
-            "middle_click",
-            "screenshot",
-            "cursor_position",
-        ):
-            if text is not None:
-                raise ToolError(f"text is not accepted for {action}")
-            if coordinate is not None:
-                raise ToolError(f"coordinate is not accepted for {action}")
-
-            if action == "screenshot":
-                return await self.screenshot()
-            elif action == "cursor_position":
-                result = await self.shell(
-                    f"{self.xdotool} getmouselocation --shell",
-                    take_screenshot=False,
-                )
-                output = result.output or ""
-                x, y = self.scale_coordinates(
-                    ScalingSource.COMPUTER,
-                    int(output.split("X=")[1].split("\n")[0]),
-                    int(output.split("Y=")[1].split("\n")[0]),
-                )
-                return result.replace(output=f"X={x},Y={y}")
-            else:
-                click_arg = {
-                    "left_click": "1",
-                    "right_click": "3",
-                    "middle_click": "2",
-                    "double_click": "--repeat 2 --delay 500 1",
-                }[action]
-                return await self.shell(f"{self.xdotool} click {click_arg}")
+        if action in MOUSE_CLICK:
+            return await self._handle_mouse_click(action, coordinate, text)
 
         raise ToolError(f"Invalid action: {action}")
 
@@ -248,3 +180,70 @@ class ComputerTool(BaseAnthropicTool):
             return round(x / x_scaling_factor), round(y / y_scaling_factor)
         # scale down
         return round(x * x_scaling_factor), round(y * y_scaling_factor)
+
+    async def _handle_mouse_movement(self, action: str, coordinate: tuple[int, int] | None, text: str | None):
+        if coordinate is None:
+            raise ToolError(f"coordinate is required for {action}")
+        if text is not None:
+            raise ToolError(f"text is not accepted for {action}")
+        if not isinstance(coordinate, list) or len(coordinate) != 2:
+            raise ToolError(f"{coordinate} must be a tuple of length 2")
+        if not all(isinstance(i, int) and i >= 0 for i in coordinate):
+            raise ToolError(f"{coordinate} must be a tuple of non-negative ints")
+
+        x, y = self.scale_coordinates(ScalingSource.API, coordinate[0], coordinate[1])
+
+        if action == "mouse_move":
+            return await self.shell(f"{self.xdotool} mousemove --sync {x} {y}")
+        if action == "left_click_drag":
+            return await self.shell(f"{self.xdotool} mousedown 1 mousemove --sync {x} {y} mouseup 1")
+
+    async def _handle_keyboard(self, action: str, coordinate: tuple[int, int] | None, text: str | None):
+        if text is None:
+            raise ToolError(f"text is required for {action}")
+        if coordinate is not None:
+            raise ToolError(f"coordinate is not accepted for {action}")
+        if not isinstance(text, str):
+            raise ToolError(f"{text} must be a string")
+
+        if action == "key":
+            return await self.shell(f"{self.xdotool} key -- {text}")
+        if action == "type":
+            results: list[ToolResult] = []
+            for chunk in chunks(text, TYPING_GROUP_SIZE):
+                cmd = f"{self.xdotool} type --delay {TYPING_DELAY_MS} -- {shlex.quote(chunk)}"
+                results.append(await self.shell(cmd, take_screenshot=False))
+            screenshot_base64 = (await self.screenshot()).base64_image
+            return ToolResult(
+                output="".join(result.output or "" for result in results),
+                error="".join(result.error or "" for result in results),
+                base64_image=screenshot_base64,
+            )
+
+    async def _handle_mouse_click(self, action: str, coordinate: tuple[int, int] | None, text: str | None):
+        if text is not None:
+            raise ToolError(f"text is not accepted for {action}")
+        if coordinate is not None:
+            raise ToolError(f"coordinate is not accepted for {action}")
+
+        if action == "screenshot":
+            return await self.screenshot()
+        if action == "cursor_position":
+            result = await self.shell(
+                f"{self.xdotool} getmouselocation --shell",
+                take_screenshot=False,
+            )
+            output = result.output or ""
+            x, y = self.scale_coordinates(
+                ScalingSource.COMPUTER,
+                int(output.split("X=")[1].split("\n")[0]),
+                int(output.split("Y=")[1].split("\n")[0]),
+            )
+            return result.replace(output=f"X={x},Y={y}")
+        click_arg = {
+            "left_click": "1",
+            "right_click": "3",
+            "middle_click": "2",
+            "double_click": "--repeat 2 --delay 500 1",
+        }[action]
+        return await self.shell(f"{self.xdotool} click {click_arg}")
