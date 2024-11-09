@@ -1,3 +1,4 @@
+name: computer-use
 services:
   ui:
     container_name: computer-use-ui
