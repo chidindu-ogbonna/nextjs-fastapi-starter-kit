@@ -22,8 +22,8 @@ from anthropic.types.beta import (
     BetaToolUseBlockParam,
 )
 
-from .logger import logger
-from .tools import BashTool, ComputerTool, EditTool, ToolCollection, ToolResult
+from backend.core.logger import logger
+from backend.tools import BashTool, ComputerTool, EditTool, ToolCollection, ToolResult
 
 COMPUTER_USE_BETA_FLAG = "computer-use-2024-10-22"
 PROMPT_CACHING_BETA_FLAG = "prompt-caching-2024-07-31"

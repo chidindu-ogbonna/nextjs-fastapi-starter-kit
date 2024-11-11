@@ -1,7 +1,7 @@
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from computer_use.tools.computer import ComputerTool, ScalingSource, ToolError, ToolResult
+from backend.tools.computer import ComputerTool, ScalingSource, ToolError, ToolResult
 
 
 @pytest.fixture

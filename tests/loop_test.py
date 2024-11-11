@@ -2,7 +2,7 @@ from unittest import mock
 
 from anthropic.types import TextBlock, ToolUseBlock
 from anthropic.types.beta import BetaMessage, BetaMessageParam, BetaTextBlockParam
-from computer_use.loop import APIProvider, sampling_loop
+from backend.loop import APIProvider, sampling_loop
 
 
 async def test_loop():
@@ -26,8 +26,8 @@ async def test_loop():
     tool_output_callback = mock.Mock()
     api_response_callback = mock.Mock()
 
-    with mock.patch("computer_use.loop.Anthropic", return_value=client), mock.patch(
-        "computer_use.loop.ToolCollection", return_value=tool_collection
+    with mock.patch("backend.loop.Anthropic", return_value=client), mock.patch(
+        "backend.loop.ToolCollection", return_value=tool_collection
     ):
         messages: list[BetaMessageParam] = [{"role": "user", "content": "Test message"}]
         result = await sampling_loop(

@@ -1,4 +1,4 @@
-extend-exclude = [".venv"]
+extend-exclude = [".venv", "backend/alembic/versions"]
 
 line-length = 120
 

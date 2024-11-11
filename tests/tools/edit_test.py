@@ -2,8 +2,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from computer_use.tools.base import CLIResult, ToolError, ToolResult
-from computer_use.tools.edit import EditTool
+from backend.tools.base import CLIResult, ToolError, ToolResult
+from backend.tools.edit import EditTool
 
 
 @pytest.mark.asyncio
@@ -22,7 +22,7 @@ async def test_view_command():
 
     # Test viewing a directory
     with patch("pathlib.Path.exists", return_value=True), patch("pathlib.Path.is_dir", return_value=True), patch(
-        "computer_use.tools.edit.run"
+        "backend.tools.edit.run"
     ) as mock_run:
         mock_run.return_value = (None, "file1.txt\nfile2.txt", None)
         result = await edit_tool(command="view", path="/test/dir")

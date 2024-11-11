@@ -19,8 +19,8 @@ from anthropic import RateLimitError
 from anthropic.types.beta import BetaContentBlockParam, BetaTextBlockParam
 from streamlit.delta_generator import DeltaGenerator
 
-from computer_use.loop import PROVIDER_TO_DEFAULT_MODEL_NAME, APIProvider, sampling_loop
-from computer_use.tools import ToolResult
+from backend.loop import PROVIDER_TO_DEFAULT_MODEL_NAME, APIProvider, sampling_loop
+from backend.tools import ToolResult
 
 CONFIG_DIR = PosixPath("~/.anthropic").expanduser()
 API_KEY_FILE = CONFIG_DIR / "api_key"
@@ -124,7 +124,7 @@ async def main():
         st.text_area(
             "Custom System Prompt Suffix",
             key="custom_system_prompt",
-            help="Additional instructions to append to the system prompt. see computer_use/loop.py for the base system prompt.",
+            help="Additional instructions to append to the system prompt. see backend/loop.py for the base system prompt.",
             on_change=lambda: save_to_storage("system_prompt", st.session_state.custom_system_prompt),
         )
         st.checkbox("Hide screenshots", key="hide_images")

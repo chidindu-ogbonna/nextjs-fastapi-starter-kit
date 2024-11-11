@@ -1,18 +1,19 @@
-name: computer-use
+name: mployee
 services:
-  ui:
-    container_name: ui
+  backend:
+    container_name: backend
     build:
       context: .
-      dockerfile: ui.Dockerfile
+      dockerfile: backend.Dockerfile
     ports:
       - "5900:5900"
       - "8501:8501"
       - "6080:6080"
       - "8080:8080"
+      - "8000:8000" # fastapi
     env_file:
       - .env
     volumes:
-      - ./computer_use:/home/computeruse/computer_use
-      - ./image:/home/computeruse/image
-      - ./.env:/home/computeruse/.env
+      - ./backend:/home/mployee/backend
+      - ./image:/home/mployee/image
+      - ./.env:/home/mployee/.env

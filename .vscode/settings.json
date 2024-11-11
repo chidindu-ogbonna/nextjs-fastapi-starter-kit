@@ -1,4 +1,6 @@
 {
+    // Disable mypy extention if you have it enabled on this workspace
+
     "pylint.args": [
         // W0236: overriding __call__ method with async
         "--disable=missing-module-docstring,missing-function-docstring,missing-class-docstring,C0301,W0236,W1203"
