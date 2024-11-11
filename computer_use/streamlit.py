@@ -17,9 +17,10 @@ import httpx
 import streamlit as st
 from anthropic import RateLimitError
 from anthropic.types.beta import BetaContentBlockParam, BetaTextBlockParam
+from streamlit.delta_generator import DeltaGenerator
+
 from computer_use.loop import PROVIDER_TO_DEFAULT_MODEL_NAME, APIProvider, sampling_loop
 from computer_use.tools import ToolResult
-from streamlit.delta_generator import DeltaGenerator
 
 CONFIG_DIR = PosixPath("~/.anthropic").expanduser()
 API_KEY_FILE = CONFIG_DIR / "api_key"

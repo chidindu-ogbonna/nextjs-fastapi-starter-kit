@@ -9,14 +9,7 @@ from enum import StrEnum
 from typing import Any, cast
 
 import httpx
-from anthropic import (
-    Anthropic,
-    AnthropicBedrock,
-    AnthropicVertex,
-    APIError,
-    APIResponseValidationError,
-    APIStatusError,
-)
+from anthropic import Anthropic, AnthropicBedrock, AnthropicVertex, APIError, APIResponseValidationError, APIStatusError
 from anthropic.types.beta import (
     BetaCacheControlEphemeralParam,
     BetaContentBlockParam,
@@ -29,6 +22,7 @@ from anthropic.types.beta import (
     BetaToolUseBlockParam,
 )
 
+from .logger import logger
 from .tools import BashTool, ComputerTool, EditTool, ToolCollection, ToolResult
 
 COMPUTER_USE_BETA_FLAG = "computer-use-2024-10-22"
@@ -67,6 +61,7 @@ SYSTEM_PROMPT = f"""<SYSTEM_CAPABILITY>
 <IMPORTANT>
 * When using Firefox, if a startup wizard appears, IGNORE IT.  Do not even click "skip this step".  Instead, click on the address bar where it says "Search or enter address", and enter the appropriate search term or URL there.
 * If the item you are looking at is a pdf, if after taking a single screenshot of the pdf it seems that you want to read the entire document instead of trying to continue to read the pdf from your screenshots + navigation, determine the URL, use curl to download the pdf, install and use pdftotext to convert it to a text file, and then read that text file directly with your StrReplaceEditTool.
+* Always scroll down to see everything. If you are not sure if you have seen everything, scroll down.
 </IMPORTANT>"""
 
 
@@ -78,9 +73,7 @@ async def sampling_loop(
     messages: list[BetaMessageParam],
     output_callback: Callable[[BetaContentBlockParam], None],
     tool_output_callback: Callable[[ToolResult, str], None],
-    api_response_callback: Callable[
-        [httpx.Request, httpx.Response | object | None, Exception | None], None
-    ],
+    api_response_callback: Callable[[httpx.Request, httpx.Response | object | None, Exception | None], None],
     api_key: str,
     only_n_most_recent_images: int | None = None,
     max_tokens: int = 4096,
@@ -138,44 +131,40 @@ async def sampling_loop(
                 tools=tool_collection.to_params(),
                 betas=betas,
             )
+            logger.info(
+                f"ANTHROPIC_RESPONSE: request={raw_response.http_response.request} content={raw_response.content}",
+            )
+            api_response_callback(raw_response.http_response.request, raw_response.http_response, None)
+            response = raw_response.parse()
+            response_params = _response_to_params(response)
+            messages.append(
+                {
+                    "role": "assistant",
+                    "content": response_params,
+                }
+            )
+            tool_result_content: list[BetaToolResultBlockParam] = []
+            for content_block in response_params:
+                output_callback(content_block)
+                if content_block["type"] == "tool_use":
+                    result = await tool_collection.run(
+                        name=content_block["name"],
+                        tool_input=cast(dict[str, Any], content_block["input"]),
+                    )
+                    tool_result_content.append(_make_api_tool_result(result, content_block["id"]))
+                    tool_output_callback(result, content_block["id"])
+            if not tool_result_content:
+                return messages
+            messages.append({"content": tool_result_content, "role": "user"})
+
         except (APIStatusError, APIResponseValidationError) as e:
+            logger.error(f"ANTHROPIC_VALIDATION_ERROR: {e}")
             api_response_callback(e.request, e.response, e)
             return messages
         except APIError as e:
+            logger.error(f"ANTHROPIC_API_ERROR: {e}")
             api_response_callback(e.request, e.body, e)
             return messages
-
-        api_response_callback(
-            raw_response.http_response.request, raw_response.http_response, None
-        )
-
-        response = raw_response.parse()
-
-        response_params = _response_to_params(response)
-        messages.append(
-            {
-                "role": "assistant",
-                "content": response_params,
-            }
-        )
-
-        tool_result_content: list[BetaToolResultBlockParam] = []
-        for content_block in response_params:
-            output_callback(content_block)
-            if content_block["type"] == "tool_use":
-                result = await tool_collection.run(
-                    name=content_block["name"],
-                    tool_input=cast(dict[str, Any], content_block["input"]),
-                )
-                tool_result_content.append(
-                    _make_api_tool_result(result, content_block["id"])
-                )
-                tool_output_callback(result, content_block["id"])
-
-        if not tool_result_content:
-            return messages
-
-        messages.append({"content": tool_result_content, "role": "user"})
 
 
 def _maybe_filter_to_n_most_recent_images(
@@ -197,9 +186,7 @@ def _maybe_filter_to_n_most_recent_images(
         [
             item
             for message in messages
-            for item in (
-                message["content"] if isinstance(message["content"], list) else []
-            )
+            for item in (message["content"] if isinstance(message["content"], list) else [])
             if isinstance(item, dict) and item.get("type") == "tool_result"
         ],
     )
@@ -223,9 +210,7 @@ def _maybe_filter_to_n_most_recent_images(
                     if images_to_remove > 0:
                         images_to_remove -= 1
                         continue
-                new_content.append(
-                    cast(BetaTextBlockParam | BetaImageBlockParam, content)
-                )
+                new_content.append(cast(BetaTextBlockParam | BetaImageBlockParam, content))
             tool_result["content"] = new_content
 
 
@@ -251,23 +236,17 @@ def _inject_prompt_caching(
 
     breakpoints_remaining = 3
     for message in reversed(messages):
-        if message["role"] == "user" and isinstance(
-            content := message["content"], list
-        ):
+        if message["role"] == "user" and isinstance(content := message["content"], list):
             if breakpoints_remaining:
                 breakpoints_remaining -= 1
-                content[-1]["cache_control"] = BetaCacheControlEphemeralParam(
-                    {"type": "ephemeral"}
-                )
+                content[-1]["cache_control"] = BetaCacheControlEphemeralParam({"type": "ephemeral"})
             else:
                 content[-1].pop("cache_control", None)
                 # we'll only every have one extra turn per loop
                 break
 
 
-def _make_api_tool_result(
-    result: ToolResult, tool_use_id: str
-) -> BetaToolResultBlockParam:
+def _make_api_tool_result(result: ToolResult, tool_use_id: str) -> BetaToolResultBlockParam:
     """Convert an agent ToolResult to an API ToolResultBlockParam."""
     is_error = False
     if result.error:

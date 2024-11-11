@@ -1,0 +1,37 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        // {
+        //     "name": "run service",
+        //     "type": "debugpy",
+        //     "request": "launch",
+        //     "module": "uvicorn",
+        //     "args": [
+        //         "app.main:app",
+        //         "--reload"
+        //     ],
+        //     "cwd": "${workspaceFolder}",
+        //     "jinja": true,
+        //     "envFile": "${workspaceFolder}/.env",
+        //     "preLaunchTask": "activate:venv"
+        // },
+        {
+            "name": "run computer-use",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "./entrypoint.sh",
+            "args": [],
+            "cwd": "${workspaceFolder}/image",
+            "jinja": true,
+            "envFile": "${workspaceFolder}/.env",
+            "preLaunchTask": "activate:venv"
+        }
+        // {
+        //     "type": "chrome",
+        //     "request": "launch",
+        //     "name": "Debug Frontend: Launch Chrome against http://localhost:5173",
+        //     "url": "http://localhost:5173",
+        //     "webRoot": "${workspaceFolder}/frontend"
+        // },
+    ]
+}
