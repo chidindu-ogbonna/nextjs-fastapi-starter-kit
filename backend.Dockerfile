@@ -83,8 +83,8 @@ RUN python -m pip install --upgrade pip==23.1.2 setuptools==58.0.4 wheel==0.40.0
     python -m pip config set global.disable-pip-version-check true
 
 # only reinstall if requirements.txt changes
-COPY --chown=$USERNAME:$USERNAME backend/requirements.txt $HOME/backend/requirements.txt
-RUN python -m pip install -r $HOME/backend/requirements.txt
+COPY --chown=$USERNAME:$USERNAME requirements.txt $HOME/requirements.txt
+RUN python -m pip install -r $HOME/requirements.txt
 
 # setup desktop env & app
 COPY --chown=$USERNAME:$USERNAME image/ $HOME
