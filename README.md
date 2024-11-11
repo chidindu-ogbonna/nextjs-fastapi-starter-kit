@@ -13,3 +13,9 @@
 ```bash
 docker compose up --build
 ```
+
+### Deployment
+
+```bash
+docker compose up
+```

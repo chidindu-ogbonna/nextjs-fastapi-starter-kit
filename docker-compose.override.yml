@@ -1,0 +1,23 @@
+services:
+  backend:
+    # Hot reload for development
+    volumes:
+      - ./backend:/home/mployee/backend
+      - ./image:/home/mployee/image
+      - ./.env:/home/mployee/.env
+      # TODO: remove once coverage is done locally
+      - ./backend/htmlcov:/app/htmlcov
+    environment:
+      - DEBUG=1
+      - DEVELOPMENT=1
+
+
+  db:
+    restart: "no"
+    ports:
+      - "5432:5432"
+
+  adminer:
+    restart: "no"
+    ports:
+      - "8080:8080"
