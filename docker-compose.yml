@@ -17,7 +17,6 @@ services:
       - "8088:8080"
       - "8000:8000" # fastapi
     networks:
-      # - traefik-public
       - default
     env_file:
       - .env
@@ -44,7 +43,13 @@ services:
       - ./image:/home/mployee/image
       - ./.env:/home/mployee/.env
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:8000/api/v1/utils/health-check/",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -69,34 +74,18 @@ services:
       - POSTGRES_DB=${POSTGRES_DB?Variable not set}
 
   adminer:
-    image: adminer
+    image: ghcr.io/shyim/adminerevo:latest
     restart: always
     networks:
-      # - traefik-public
       - default
     depends_on:
       - db
     environment:
-      - ADMINER_DESIGN=pepa-linha-dark
-    # labels:
-    #   - traefik.enable=true
-    #   - traefik.docker.network=traefik-public
-    #   - traefik.constraint-label=traefik-public
-    #   - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-http.rule=Host(`adminer.${DOMAIN?Variable not set}`)
-    #   - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-http.entrypoints=http
-    #   - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-http.middlewares=https-redirect
-    #   - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-https.rule=Host(`adminer.${DOMAIN?Variable not set}`)
-    #   - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-https.entrypoints=https
-    #   - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-https.tls=true
-    #   - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-https.tls.certresolver=le
-    #   - traefik.http.services.${STACK_NAME?Variable not set}-adminer.loadbalancer.server.port=8080
+      - ADMINER_DESIGN=arcs-material # nette |pepa-linha-dark | kahi2 | hydra | dracula - More themes -> https://www.adminer.org/
 
   prestart:
-    image: '${DOCKER_IMAGE_BACKEND}:${TAG-latest}'
-    # build:
-    #   context: ./backend
+    image: "${DOCKER_IMAGE_BACKEND}:${TAG-latest}"
     networks:
-      # - traefik-public
       - default
     depends_on:
       db:
@@ -126,8 +115,3 @@ services:
 
 volumes:
   app-db-data:
-
-# networks:
-#   traefik-public:
-#     # Allow setting it to false for testing
-#     external: true
