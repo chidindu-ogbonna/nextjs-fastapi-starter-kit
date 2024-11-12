@@ -1,0 +1,21 @@
+@font-face {
+  font-family: "GT-Walsheim";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url("../public/fonts/GT-Walsheim/GT-Walsheim-Regular.woff2");
+  text-rendering: optimizeLegibility;
+  font-variant-ligatures: common-ligatures;
+  unicode-range: U+000-5FF;
+}
+
+@font-face {
+  font-family: "GT-Walsheim";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url("../public/fonts/GT-Walsheim/GT-Walsheim-Bold.woff2");
+  text-rendering: optimizeLegibility;
+  font-variant-ligatures: common-ligatures;
+  unicode-range: U+000-5FF;
+}
