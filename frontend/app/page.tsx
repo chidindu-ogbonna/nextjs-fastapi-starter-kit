@@ -31,7 +31,7 @@ export default async function HomePage() {
         </header>
 
         <main className="px-4 py-10 mx-auto text-center max-w-7xl md:py-16 sm:px-6 lg:px-8">
-          <div>mployee AI</div>
+          <div>LOOK BEYOND THE HORIZON and Africa Hate it here</div>
         </main>
       </div>
 
